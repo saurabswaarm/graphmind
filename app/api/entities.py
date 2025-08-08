@@ -1,0 +1,221 @@
+from typing import Optional, Dict, Any
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
+from sqlalchemy import select, func, or_, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..db.session import get_db
+from ..models.entity import Entity
+from ..models.relationship import Relationship
+from ..schemas.base import PaginationResponse
+from ..schemas.entity import EntityCreate, EntityUpdate, EntityRead, EntityFilter
+
+router = APIRouter(prefix="/entities")
+
+
+@router.post("", response_model=EntityRead, status_code=status.HTTP_201_CREATED)
+async def create_entity(
+    entity: EntityCreate,
+    db: AsyncSession = Depends(get_db)
+) -> Entity:
+    """
+    Create a new entity.
+    """
+    db_entity = Entity(
+        type=entity.type,
+        name=entity.name,
+        metadata=entity.metadata
+    )
+    
+    db.add(db_entity)
+    await db.commit()
+    await db.refresh(db_entity)
+    
+    return db_entity
+
+
+@router.get("/{entity_id}", response_model=EntityRead)
+async def read_entity(
+    entity_id: UUID = Path(..., description="The ID of the entity to get"),
+    db: AsyncSession = Depends(get_db)
+) -> Entity:
+    """
+    Get a specific entity by ID.
+    """
+    entity = await db.get(Entity, entity_id)
+    
+    if entity is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity with ID {entity_id} not found"
+        )
+    
+    return entity
+
+
+@router.get("", response_model=PaginationResponse[EntityRead])
+async def list_entities(
+    type: Optional[str] = Query(None, description="Filter by entity type"),
+    name: Optional[str] = Query(None, description="Filter by exact entity name"),
+    name_contains: Optional[str] = Query(None, description="Filter by name containing string (case-insensitive)"),
+    metadata_contains: Optional[str] = Query(None, description="Filter by metadata containing JSON (as string)"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    sort: str = Query("created_at:desc", description="Sort field and direction (field:asc|desc)"),
+    db: AsyncSession = Depends(get_db)
+) -> PaginationResponse[EntityRead]:
+    """
+    List entities with optional filtering, sorting, and pagination.
+    """
+    # Parse sort parameter
+    sort_field, sort_direction = sort.split(":", 1) if ":" in sort else (sort, "desc")
+    
+    # Build query
+    query = select(Entity)
+    count_query = select(func.count()).select_from(Entity)
+    
+    # Apply filters
+    if type:
+        query = query.where(Entity.type == type)
+        count_query = count_query.where(Entity.type == type)
+    
+    if name:
+        query = query.where(Entity.name == name)
+        count_query = count_query.where(Entity.name == name)
+    
+    if name_contains:
+        query = query.where(Entity.name.ilike(f"%{name_contains}%"))
+        count_query = count_query.where(Entity.name.ilike(f"%{name_contains}%"))
+    
+    if metadata_contains:
+        # Parse metadata_contains as JSON
+        import json
+        try:
+            metadata_dict = json.loads(metadata_contains)
+            query = query.where(text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
+            count_query = count_query.where(text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid JSON in metadata_contains parameter"
+            )
+    
+    # Apply sorting
+    if sort_field == "created_at" and sort_direction == "desc":
+        query = query.order_by(Entity.created_at.desc())
+    elif sort_field == "created_at" and sort_direction == "asc":
+        query = query.order_by(Entity.created_at.asc())
+    elif sort_field == "updated_at" and sort_direction == "desc":
+        query = query.order_by(Entity.updated_at.desc())
+    elif sort_field == "updated_at" and sort_direction == "asc":
+        query = query.order_by(Entity.updated_at.asc())
+    elif sort_field == "name" and sort_direction == "desc":
+        query = query.order_by(Entity.name.desc())
+    elif sort_field == "name" and sort_direction == "asc":
+        query = query.order_by(Entity.name.asc())
+    elif sort_field == "type" and sort_direction == "desc":
+        query = query.order_by(Entity.type.desc())
+    elif sort_field == "type" and sort_direction == "asc":
+        query = query.order_by(Entity.type.asc())
+    else:
+        query = query.order_by(Entity.created_at.desc())
+    
+    # Apply pagination
+    query = query.offset(offset).limit(limit)
+    
+    # Execute queries
+    result = await db.execute(query)
+    entities = result.scalars().all()
+    
+    count_result = await db.execute(count_query)
+    total = count_result.scalar()
+    
+    return PaginationResponse(
+        items=entities,
+        total=total,
+        limit=limit,
+        offset=offset
+    )
+
+
+@router.patch("/{entity_id}", response_model=EntityRead)
+async def update_entity(
+    entity_update: EntityUpdate,
+    entity_id: UUID = Path(..., description="The ID of the entity to update"),
+    metadata_mode: str = Query("replace", description="How to handle metadata updates: 'merge' or 'replace'"),
+    db: AsyncSession = Depends(get_db)
+) -> Entity:
+    """
+    Update an entity by ID.
+    """
+    entity = await db.get(Entity, entity_id)
+    
+    if entity is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity with ID {entity_id} not found"
+        )
+    
+    # Update fields if provided in request
+    if entity_update.type is not None:
+        entity.type = entity_update.type
+    
+    if entity_update.name is not None:
+        entity.name = entity_update.name
+    
+    if entity_update.metadata is not None:
+        if metadata_mode == "merge":
+            # Merge existing metadata with new metadata
+            entity.metadata = {**entity.metadata, **entity_update.metadata}
+        else:
+            # Replace metadata completely
+            entity.metadata = entity_update.metadata
+    
+    await db.commit()
+    await db.refresh(entity)
+    
+    return entity
+
+
+@router.delete("/{entity_id}", status_code=status.HTTP_200_OK)
+async def delete_entity(
+    entity_id: UUID = Path(..., description="The ID of the entity to delete"),
+    force: bool = Query(False, description="Force delete even if relationships exist"),
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, bool]:
+    """
+    Delete an entity by ID.
+    
+    By default, will reject deletion if relationships exist for this entity.
+    Use force=true to cascade delete relationships.
+    """
+    entity = await db.get(Entity, entity_id)
+    
+    if entity is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity with ID {entity_id} not found"
+        )
+    
+    if not force:
+        # Check if entity has any relationships
+        relationship_query = select(func.count()).select_from(Relationship).where(
+            or_(
+                Relationship.source_entity_id == entity_id,
+                Relationship.target_entity_id == entity_id
+            )
+        )
+        result = await db.execute(relationship_query)
+        relationship_count = result.scalar()
+        
+        if relationship_count > 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Cannot delete entity with ID {entity_id} because it has {relationship_count} relationships. Use force=true to delete anyway."
+            )
+    
+    await db.delete(entity)
+    await db.commit()
+    
+    return {"deleted": True}
