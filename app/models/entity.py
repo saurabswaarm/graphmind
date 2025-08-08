@@ -1,11 +1,28 @@
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Type
 
-from sqlalchemy import String, Index, text
+from sqlalchemy import String, Index, text, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
+from sqlalchemy.engine import Dialect
 
 from .base import Base
+
+
+class JSONType(TypeDecorator):
+    """Platform-independent JSON type.
+    
+    Uses PostgreSQL's JSONB type when available, otherwise uses JSON or TEXT type.
+    """
+    impl = JSON
+    cache_ok = True
+    
+    def load_dialect_impl(self, dialect: Dialect) -> Type:
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        else:
+            return dialect.type_descriptor(JSON())
 
 
 class Entity(Base):
@@ -16,7 +33,7 @@ class Entity(Base):
         id: UUID primary key
         type: Type of entity (e.g., "person", "company", "asset")
         name: Human-friendly label for the entity
-        metadata: JSON metadata for flexible attributes
+        entity_metadata: JSON metadata for flexible attributes
         created_at: Timestamp when entity was created
         updated_at: Timestamp when entity was last updated
     """
@@ -25,8 +42,8 @@ class Entity(Base):
     # Fields
     type: Mapped[str] = mapped_column(String, index=True)
     name: Mapped[str] = mapped_column(String, index=True)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(
-        JSONB, default_factory=dict, server_default=text("'{}'::jsonb")
+    entity_metadata: Mapped[Dict[str, Any]] = mapped_column(
+        JSONType, default={}, server_default=text("'{}'::jsonb")
     )
     
     # Relationships
@@ -47,7 +64,7 @@ class Entity(Base):
     # Indexes
     __table_args__ = (
         # GIN index for JSONB metadata
-        Index("ix_entities_metadata_gin", metadata, postgresql_using="gin"),
+        Index("ix_entities_metadata_gin", entity_metadata, postgresql_using="gin"),
     )
     
     def __repr__(self) -> str:

@@ -1,20 +1,29 @@
 import asyncio
 import os
+import sys
 from typing import AsyncGenerator, Generator
+
+# Apply mock configuration patch BEFORE importing any app modules
+from tests.mock_config import patch_app_config
+
+# Patch the app configuration
+mock_settings = patch_app_config()
 
 import pytest
 import pytest_asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import NullPool
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.main import create_app
+# Import our test utilities
+from tests.db_utils import test_engine, get_test_db
+
+# Now we can safely import app modules
 from app.models.base import Base
-from app.db.session import get_db
 
-# Test database URL - using SQLite for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# Import router modules
+from app.api import health, entities, relationships, graph
+from app.api.errors import register_exception_handlers
 
 
 @pytest.fixture(scope="session")
@@ -26,38 +35,28 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def test_engine():
-    """Create a test engine for the database."""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=NullPool,
-        echo=True
-    )
-    
+async def init_db():
+    """Initialize the test database."""
     # Create tables
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     
-    yield engine
+    yield test_engine
     
     # Clean up
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     
-    await engine.dispose()
+    await test_engine.dispose()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def test_db(test_engine) -> AsyncGenerator[AsyncSession, None]:
+async def test_db(init_db) -> AsyncGenerator[AsyncSession, None]:
     """Create a fresh test database session for a test."""
-    # Create a session factory bound to the test engine
-    test_async_session = async_sessionmaker(
-        test_engine, expire_on_commit=False, autoflush=False
-    )
+    from tests.db_utils import TestSessionLocal
     
-    async with test_async_session() as session:
+    async with TestSessionLocal() as session:
         yield session
         await session.rollback()
         # Clean tables after each test
@@ -69,8 +68,31 @@ async def test_db(test_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture(scope="function")
 async def test_app(test_db) -> FastAPI:
     """Create a test app with the test database."""
-    # Override the get_db dependency
-    app = create_app()
+    # Create a test FastAPI app directly instead of using create_app()
+    app = FastAPI(
+        title="Graph API Test",
+        description="Test instance of the Graph API",
+        version="0.1.0",
+    )
+    
+    # Create API router
+    api_router = APIRouter()
+    
+    # Include all routers
+    api_router.include_router(health.router, tags=["health"])
+    api_router.include_router(entities.router, prefix="/entities", tags=["entities"])
+    api_router.include_router(relationships.router, prefix="/relationships", tags=["relationships"])
+    api_router.include_router(graph.router, prefix="/graph", tags=["graph"])
+    
+    # Add API router to app
+    app.include_router(api_router)
+    
+    # Register exception handlers
+    register_exception_handlers(app)
+    
+    # Override the database dependency with our test db
+    # Import this here to avoid circular imports
+    from app.db.session import get_db
     
     async def override_get_db():
         yield test_db
