@@ -111,8 +111,8 @@ async def get_graph(
         )
 
     # Initialize node and edge collections
-    nodes = {}  # UUID -> Entity
-    edges = {}  # UUID -> Relationship
+    nodes: Dict[UUID, Entity] = {}  # UUID -> Entity
+    edges: Dict[UUID, Relationship] = {}  # UUID -> Relationship
     truncated = False
 
     # Fetch graph data based on scope
@@ -223,7 +223,7 @@ async def get_graph(
         visited = {root_entity.id}
 
         for current_depth in range(depth):
-            next_frontier = []
+            next_frontier: List[UUID] = []
 
             # For each entity in the current frontier
             for entity_id in frontier:

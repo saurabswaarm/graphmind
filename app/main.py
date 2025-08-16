@@ -1,7 +1,6 @@
 from fastapi import FastAPI, APIRouter, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uuid
 
 from .config import settings
 from .logging import setup_logging

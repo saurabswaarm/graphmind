@@ -9,13 +9,19 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ..schemas.base import ErrorResponse
 
 
+
 async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
+    request: Request, exc: Exception
 ) -> JSONResponse:
     """
     Handler for request validation errors.
     Formats error details in a consistent way.
     """
+    # Type check and cast for proper handling
+    if not isinstance(exc, RequestValidationError):
+        # This should never happen in practice, but we need to satisfy the type checker
+        raise TypeError(f"Expected RequestValidationError, got {type(exc)}")
+    
     # Convert ErrorDetails to Dict[str, Any] for compatibility
     errors: List[Dict[str, Any]] = [dict(error) for error in exc.errors()]
     return JSONResponse(
@@ -25,12 +31,17 @@ async def validation_exception_handler(
 
 
 async def integrity_error_handler(
-    request: Request, exc: IntegrityError
+    request: Request, exc: Exception
 ) -> JSONResponse:
     """
     Handler for SQLAlchemy IntegrityError exceptions.
     Converts database constraint errors into user-friendly messages.
     """
+    # Type check and cast for proper handling
+    if not isinstance(exc, IntegrityError):
+        # This should never happen in practice, but we need to satisfy the type checker
+        raise TypeError(f"Expected IntegrityError, got {type(exc)}")
+    
     error_message = str(exc)
     error_code = "integrity_error"
     status_code = status.HTTP_400_BAD_REQUEST
@@ -75,11 +86,16 @@ async def integrity_error_handler(
 
 
 async def sqlalchemy_error_handler(
-    request: Request, exc: SQLAlchemyError
+    request: Request, exc: Exception
 ) -> JSONResponse:
     """
     Handler for general SQLAlchemy errors.
     """
+    # Type check and cast for proper handling
+    if not isinstance(exc, SQLAlchemyError):
+        # This should never happen in practice, but we need to satisfy the type checker
+        raise TypeError(f"Expected SQLAlchemyError, got {type(exc)}")
+    
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
@@ -89,11 +105,16 @@ async def sqlalchemy_error_handler(
 
 
 async def validation_error_handler(
-    request: Request, exc: ValidationError
+    request: Request, exc: Exception
 ) -> JSONResponse:
     """
     Handler for Pydantic validation errors.
     """
+    # Type check and cast for proper handling
+    if not isinstance(exc, ValidationError):
+        # This should never happen in practice, but we need to satisfy the type checker
+        raise TypeError(f"Expected ValidationError, got {type(exc)}")
+    
     # Convert ErrorDetails to Dict[str, Any] for compatibility
     errors: List[Dict[str, Any]] = [dict(error) for error in exc.errors()]
     return JSONResponse(
@@ -114,7 +135,9 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
     )
 
 
-def register_exception_handlers(app):
+from fastapi import FastAPI
+
+def register_exception_handlers(app: FastAPI) -> None:
     """
     Register all exception handlers with the FastAPI application.
     """

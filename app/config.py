@@ -38,13 +38,13 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8080"]
 
     # Special handling for test environment
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         # For test environment, use default values if certain fields are causing issues
         if self.APP_ENV == "test":
             # Make sure we have sensible test defaults
             if not hasattr(self, "CORS_ORIGINS") or not self.CORS_ORIGINS:
-                self.CORS_ORIGINS = ["http://localhost:3000", "http://localhost:8000"]
+                object.__setattr__(self, "CORS_ORIGINS", ["http://localhost:3000", "http://localhost:8000"])
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

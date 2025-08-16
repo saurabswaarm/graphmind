@@ -1,0 +1,62 @@
+{
+  "include": [
+    "app"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.*"
+  ],
+  "ignore": [
+    "app/database.py"
+  ],
+  "defineConstant": {
+    "DEBUG": true
+  },
+  "stubPath": "./stubs",
+  "venvPath": ".",
+  "venv": ".venv",
+  
+  "reportMissingImports": "error",
+  "reportMissingTypeStubs": "none",
+  "reportUnknownParameterType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownLambdaType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUntypedFunctionDecorator": "none",
+  "reportUntypedClassDecorator": "none",
+  "reportUntypedBaseClass": "none",
+  "reportUntypedNamedTuple": "none",
+  "reportPrivateUsage": "none",
+  "reportConstantRedefinition": "error",
+  "reportDeprecated": "none",
+  "reportIncompatibleMethodOverride": "error",
+  "reportIncompatibleVariableOverride": "error",
+  "reportIncompleteStub": "none",
+  "reportUnsupportedDunderAll": "none",
+  "reportUnusedClass": "none",
+  "reportUnusedFunction": "none",
+  "reportUnusedImport": "error",
+  "reportUnusedVariable": "none",
+  "reportMissingTypeArgument": "none",
+  "reportInvalidTypeVarUse": "none",
+  "reportCallInDefaultInitializer": false,
+  "reportUnnecessaryIsInstance": "none",
+  "reportUnnecessaryCast": "none",
+  "reportUnnecessaryComparison": "none",
+  "reportUnnecessaryContains": "none",
+  "reportAssertAlwaysTrue": "none",
+  "reportSelfClsParameterName": "none",
+  "reportImplicitStringConcatenation": false,
+  "reportUnusedExpression": "none",
+  "reportUnnecessaryTypeIgnoreComment": "none",
+  "reportMatchNotExhaustive": "none",
+  "reportShadowedImports": "none",
+  "reportImplicitOverride": "none",
+  "reportUnreachable": "none",
+  
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Darwin",
+  
+  "typeCheckingMode": "strict"
+}
