@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
@@ -154,8 +154,8 @@ async def list_relationships(
         import json
         try:
             metadata_dict = json.loads(metadata_contains)
-            query = query.where(text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
-            count_query = count_query.where(text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
+            query = query.where(text("relationship_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
+            count_query = count_query.where(text("relationship_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

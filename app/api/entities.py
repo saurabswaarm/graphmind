@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, status
@@ -9,7 +9,7 @@ from ..db.session import get_db
 from ..models.entity import Entity
 from ..models.relationship import Relationship
 from ..schemas.base import PaginationResponse
-from ..schemas.entity import EntityCreate, EntityUpdate, EntityRead, EntityFilter
+from ..schemas.entity import EntityCreate, EntityUpdate, EntityRead
 
 router = APIRouter(prefix="/entities")
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/entities")
 async def create_entity(
     entity: EntityCreate,
     db: AsyncSession = Depends(get_db)
-) -> Entity:
+) -> EntityRead:
     """
     Create a new entity.
     """
@@ -32,14 +32,22 @@ async def create_entity(
     await db.commit()
     await db.refresh(db_entity)
     
-    return db_entity
+    # Return EntityRead schema instead of Entity model
+    return EntityRead(
+        id=db_entity.id,
+        type=db_entity.type,
+        name=db_entity.name,
+        metadata=db_entity.metadata,
+        created_at=db_entity.created_at,
+        updated_at=db_entity.updated_at
+    )
 
 
 @router.get("/{entity_id}", response_model=EntityRead)
 async def read_entity(
     entity_id: UUID = Path(..., description="The ID of the entity to get"),
     db: AsyncSession = Depends(get_db)
-) -> Entity:
+) -> EntityRead:
     """
     Get a specific entity by ID.
     """
@@ -51,7 +59,15 @@ async def read_entity(
             detail=f"Entity with ID {entity_id} not found"
         )
     
-    return entity
+    # Return EntityRead schema instead of Entity model
+    return EntityRead(
+        id=entity.id,
+        type=entity.type,
+        name=entity.name,
+        metadata=entity.metadata,
+        created_at=entity.created_at,
+        updated_at=entity.updated_at
+    )
 
 
 @router.get("", response_model=PaginationResponse[EntityRead])
@@ -93,8 +109,8 @@ async def list_entities(
         import json
         try:
             metadata_dict = json.loads(metadata_contains)
-            query = query.where(text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
-            count_query = count_query.where(text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
+            query = query.where(text("entity_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
+            count_query = count_query.where(text("entity_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict)))
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -131,8 +147,21 @@ async def list_entities(
     count_result = await db.execute(count_query)
     total = count_result.scalar()
     
+    # Handle case where total is None (e.g., when no entities exist)
+    total = total if total is not None else 0
+    
+    # Convert Entity models to EntityRead schemas
+    entity_reads = [EntityRead(
+        id=entity.id,
+        type=entity.type,
+        name=entity.name,
+        metadata=entity.metadata,
+        created_at=entity.created_at,
+        updated_at=entity.updated_at
+    ) for entity in entities]
+    
     return PaginationResponse(
-        items=entities,
+        items=entity_reads,
         total=total,
         limit=limit,
         offset=offset
@@ -145,7 +174,7 @@ async def update_entity(
     entity_id: UUID = Path(..., description="The ID of the entity to update"),
     metadata_mode: str = Query("replace", description="How to handle metadata updates: 'merge' or 'replace'"),
     db: AsyncSession = Depends(get_db)
-) -> Entity:
+) -> EntityRead:
     """
     Update an entity by ID.
     """
@@ -175,7 +204,15 @@ async def update_entity(
     await db.commit()
     await db.refresh(entity)
     
-    return entity
+    # Return EntityRead schema instead of Entity model
+    return EntityRead(
+        id=entity.id,
+        type=entity.type,
+        name=entity.name,
+        metadata=entity.metadata,
+        created_at=entity.created_at,
+        updated_at=entity.updated_at
+    )
 
 
 @router.delete("/{entity_id}", status_code=status.HTTP_200_OK)
@@ -208,7 +245,9 @@ async def delete_entity(
         )
         result = await db.execute(relationship_query)
         relationship_count = result.scalar()
-        
+
+        relationship_count = relationship_count if relationship_count is not None else 0
+
         if relationship_count > 0:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

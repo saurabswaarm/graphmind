@@ -10,7 +10,6 @@ A backend service for managing entities, relationships, and graph data using Fas
 - Database migrations with Alembic
 - Structured JSON logging
 - Environment-based configuration
-- Containerized with Docker and docker-compose
 - Health check endpoints
 
 ## Setup and Running
@@ -19,7 +18,6 @@ A backend service for managing entities, relationships, and graph data using Fas
 
 - Python 3.12+
 - [UV](https://github.com/astral-sh/uv) package manager
-- Docker and docker-compose
 
 ### Environment Variables
 
@@ -28,14 +26,6 @@ Copy the example environment file and adjust as needed:
 ```bash
 cp env.example .env
 ```
-
-### Running with Docker
-
-```bash
-docker-compose up
-```
-
-The API will be available at http://localhost:8000
 
 ### Development Setup
 
@@ -78,8 +68,7 @@ graphapp/
 │   └── main.py             # FastAPI application
 ├── migrations/             # Alembic migrations
 ├── tests/                  # Test suite
-├── Dockerfile              # Docker build instructions
-├── docker-compose.yml      # Docker services configuration
+
 ├── pyproject.toml          # Project dependencies and metadata
 └── env.example             # Example environment variables
 ```

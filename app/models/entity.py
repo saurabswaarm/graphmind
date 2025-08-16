@@ -1,4 +1,3 @@
-import uuid
 from typing import Dict, Any, List
 
 from sqlalchemy import String, Index, text
@@ -6,6 +5,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+from .relationship import Relationship
 
 
 class Entity(Base):
@@ -25,8 +25,8 @@ class Entity(Base):
     # Fields
     type: Mapped[str] = mapped_column(String, index=True)
     name: Mapped[str] = mapped_column(String, index=True)
-    entity_metadata: Mapped[Dict[str, Any]] = mapped_column(
-        JSONB, default={}, server_default=text("'{}'::jsonb")
+    metadata: Mapped[Dict[str, Any]] = mapped_column(
+        "entity_metadata", JSONB, default={}, server_default=text("'{}'::jsonb")
     )
     
     # Relationships
@@ -47,7 +47,7 @@ class Entity(Base):
     # Indexes
     __table_args__ = (
         # GIN index for JSONB metadata
-        Index("ix_entities_metadata_gin", entity_metadata, postgresql_using="gin"),
+        Index("ix_entities_metadata_gin", metadata, postgresql_using="gin"),
     )
     
     def __repr__(self) -> str:

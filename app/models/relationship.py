@@ -31,8 +31,8 @@ class Relationship(Base):
         ForeignKey("entities.id", ondelete="CASCADE"), index=True
     )
     type: Mapped[str] = mapped_column(String, index=True)
-    relationship_metadata: Mapped[Dict[str, Any]] = mapped_column(
-        JSONB, default={}, server_default=text("'{}'::jsonb")
+    metadata: Mapped[Dict[str, Any]] = mapped_column(
+        "relationship_metadata", JSONB, default={}, server_default=text("'{}'::jsonb")
     )
     
     # Relationships
@@ -53,7 +53,7 @@ class Relationship(Base):
         UniqueConstraint("source_entity_id", "target_entity_id", "type", name="uq_relationships_source_target_type"),
         
         # GIN index for JSONB metadata
-        Index("ix_relationships_metadata_gin", relationship_metadata, postgresql_using="gin"),
+        Index("ix_relationships_metadata_gin", metadata, postgresql_using="gin"),
     )
     
     def __repr__(self) -> str:
