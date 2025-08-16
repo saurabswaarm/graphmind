@@ -35,11 +35,8 @@ async def ready_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
         db_status = f"error: {str(e)}"
         # This would typically return a 503 Service Unavailable,
         # but we're just reporting the status for now
-    
-    return {
-        "status": "ready",
-        "database": db_status
-    }
+
+    return {"status": "ready", "database": db_status}
 
 
 @router.get("/version", status_code=status.HTTP_200_OK)
@@ -50,12 +47,8 @@ async def version_info() -> Dict[str, Any]:
     """
     # Get version from environment variable or default to unknown
     version = os.environ.get("APP_VERSION", "0.1.0")
-    
+
     # Get Git SHA if available
     git_sha = os.environ.get("GIT_COMMIT_SHA", "unknown")
-    
-    return {
-        "version": version,
-        "git_commit": git_sha,
-        "api": "Graph Service"
-    }
+
+    return {"version": version, "git_commit": git_sha, "api": "Graph Service"}

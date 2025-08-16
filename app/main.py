@@ -17,14 +17,14 @@ def create_app() -> FastAPI:
     """
     # Setup logging
     setup_logging(settings.LOG_LEVEL)
-    
+
     # Create FastAPI app
     app = FastAPI(
         title="Graph API",
         description="Backend service for managing entities, relationships, and graph data.",
         version="0.1.0",
     )
-    
+
     # Configure CORS
     app.add_middleware(
         CORSMiddleware,
@@ -33,10 +33,10 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Register global exception handlers
     register_exception_handlers(app)
-    
+
     # Global exception handler for UUID parsing
     @app.exception_handler(ValueError)
     async def uuid_exception_handler(request: Request, exc: ValueError):
@@ -46,17 +46,17 @@ def create_app() -> FastAPI:
                 content={"detail": "Invalid UUID format", "code": "invalid_uuid"},
             )
         raise exc  # Re-raise the exception if it's not a UUID parsing error
-    
+
     # Create API router and include all routers
     api_router = APIRouter()
     api_router.include_router(health.router, tags=["health"])
     api_router.include_router(entities.router, tags=["entities"])
     api_router.include_router(relationships.router, tags=["relationships"])
     api_router.include_router(graph.router, tags=["graph"])
-    
+
     # Include the API router in the main app
     app.include_router(api_router)
-    
+
     return app
 
 

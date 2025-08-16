@@ -6,17 +6,15 @@ from ..config import settings
 
 # Create engine with connection pool
 engine = create_async_engine(
-    str(settings.DATABASE_URL), 
+    str(settings.DATABASE_URL),
     pool_size=settings.DB_POOL_SIZE,
     pool_pre_ping=True,
-    echo=settings.APP_ENV == "local"
+    echo=settings.APP_ENV == "local",
 )
 
 # Create session factory
 async_session_maker = async_sessionmaker(
-    engine, 
-    expire_on_commit=False,
-    autoflush=False
+    engine, expire_on_commit=False, autoflush=False
 )
 
 

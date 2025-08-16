@@ -1,29 +1,32 @@
-from typing import Dict, Any, Union, List
+from typing import Any, Dict, List
 
 from fastapi import Request, status
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ..schemas.base import ErrorResponse
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """
     Handler for request validation errors.
     Formats error details in a consistent way.
     """
+    # Convert ErrorDetails to Dict[str, Any] for compatibility
+    errors: List[Dict[str, Any]] = [dict(error) for error in exc.errors()]
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=ErrorResponse(
-            detail=exc.errors(),
-            code="validation_error"
-        ).model_dump(),
+        content=ErrorResponse(detail=errors, code="validation_error").model_dump(),
     )
 
 
-async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+async def integrity_error_handler(
+    request: Request, exc: IntegrityError
+) -> JSONResponse:
     """
     Handler for SQLAlchemy IntegrityError exceptions.
     Converts database constraint errors into user-friendly messages.
@@ -31,18 +34,26 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
     error_message = str(exc)
     error_code = "integrity_error"
     status_code = status.HTTP_400_BAD_REQUEST
-    
+
     # Handle specific integrity errors with better messages
-    if "unique constraint" in error_message.lower() or "duplicate key" in error_message.lower():
-        if "relationships_source_target_type_key" in error_message or "uq_relationships_source_target_type" in error_message:
-            error_message = "A relationship with the same source, target, and type already exists."
+    if (
+        "unique constraint" in error_message.lower()
+        or "duplicate key" in error_message.lower()
+    ):
+        if (
+            "relationships_source_target_type_key" in error_message
+            or "uq_relationships_source_target_type" in error_message
+        ):
+            error_message = (
+                "A relationship with the same source, target, and type already exists."
+            )
             error_code = "duplicate_relationship"
             status_code = status.HTTP_409_CONFLICT
         else:
             error_message = "A resource with the same unique fields already exists."
             error_code = "duplicate_resource"
             status_code = status.HTTP_409_CONFLICT
-    
+
     # Foreign key constraint violations
     elif "foreign key constraint" in error_message.lower():
         if "fk_relationships_source_entity_id_entities" in error_message:
@@ -56,39 +67,38 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
         else:
             error_message = "Referenced resource does not exist."
             error_code = "reference_error"
-    
+
     return JSONResponse(
         status_code=status_code,
-        content=ErrorResponse(
-            detail=error_message,
-            code=error_code
-        ).model_dump(),
+        content=ErrorResponse(detail=error_message, code=error_code).model_dump(),
     )
 
 
-async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
+async def sqlalchemy_error_handler(
+    request: Request, exc: SQLAlchemyError
+) -> JSONResponse:
     """
     Handler for general SQLAlchemy errors.
     """
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
-            detail="Database error occurred.",
-            code="database_error"
+            detail="Database error occurred.", code="database_error"
         ).model_dump(),
     )
 
 
-async def validation_error_handler(request: Request, exc: ValidationError) -> JSONResponse:
+async def validation_error_handler(
+    request: Request, exc: ValidationError
+) -> JSONResponse:
     """
     Handler for Pydantic validation errors.
     """
+    # Convert ErrorDetails to Dict[str, Any] for compatibility
+    errors: List[Dict[str, Any]] = [dict(error) for error in exc.errors()]
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=ErrorResponse(
-            detail=exc.errors(),
-            code="validation_error"
-        ).model_dump(),
+        content=ErrorResponse(detail=errors, code="validation_error").model_dump(),
     )
 
 
@@ -99,8 +109,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
-            detail="An unexpected error occurred.",
-            code="internal_error"
+            detail="An unexpected error occurred.", code="internal_error"
         ).model_dump(),
     )
 

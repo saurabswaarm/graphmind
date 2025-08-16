@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # Database Configuration
     DATABASE_URL: Union[PostgresDsn, AnyUrl]
     DB_POOL_SIZE: int = 10
-    
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def validate_database_url(cls, v: Any) -> str:
@@ -36,12 +36,12 @@ class Settings(BaseSettings):
 
     # Security
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8080"]
-    
+
     # Special handling for test environment
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # For test environment, use default values if certain fields are causing issues
-        if self.APP_ENV == "test":  
+        if self.APP_ENV == "test":
             # Make sure we have sensible test defaults
             if not hasattr(self, "CORS_ORIGINS") or not self.CORS_ORIGINS:
                 self.CORS_ORIGINS = ["http://localhost:3000", "http://localhost:8000"]
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
         """Parse CORS_ORIGINS from string to list if needed."""
         # Print debug info
         print(f"CORS_ORIGINS value type: {type(v)}, value: {v}")
-        
+
         if isinstance(v, str):
             if not v or v.lower() == "none":
                 return []
@@ -64,7 +64,7 @@ class Settings(BaseSettings):
             return v
         elif v is None:
             return []
-        
+
         # Default empty list
         return []
 
