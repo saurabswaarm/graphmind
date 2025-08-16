@@ -1,28 +1,11 @@
 import uuid
-from typing import Dict, Any, List, Optional, Type
+from typing import Dict, Any, List
 
-from sqlalchemy import String, Index, text, JSON
+from sqlalchemy import String, Index, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.types import TypeDecorator
-from sqlalchemy.engine import Dialect
 
 from .base import Base
-
-
-class JSONType(TypeDecorator):
-    """Platform-independent JSON type.
-    
-    Uses PostgreSQL's JSONB type when available, otherwise uses JSON or TEXT type.
-    """
-    impl = JSON
-    cache_ok = True
-    
-    def load_dialect_impl(self, dialect: Dialect) -> Type:
-        if dialect.name == 'postgresql':
-            return dialect.type_descriptor(JSONB())
-        else:
-            return dialect.type_descriptor(JSON())
 
 
 class Entity(Base):
@@ -43,7 +26,7 @@ class Entity(Base):
     type: Mapped[str] = mapped_column(String, index=True)
     name: Mapped[str] = mapped_column(String, index=True)
     entity_metadata: Mapped[Dict[str, Any]] = mapped_column(
-        JSONType, default={}, server_default=text("'{}'::jsonb")
+        JSONB, default={}, server_default=text("'{}'::jsonb")
     )
     
     # Relationships

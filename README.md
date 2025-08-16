@@ -64,14 +64,6 @@ When running, visit:
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-## Testing
-
-Run tests with:
-
-```bash
-uv run pytest
-```
-
 ## Project Structure
 
 ```
