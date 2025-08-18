@@ -4,7 +4,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import Connection, engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 # Add parent directory to Python path for relative imports
@@ -15,8 +15,6 @@ from app.models.base import Base
 from app.config import settings
 
 # Import all models to ensure they're registered with Base.metadata
-from app.models.entity import Entity
-from app.models.relationship import Relationship
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -59,7 +57,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection):
+def do_run_migrations(connection: Connection):
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
@@ -78,7 +76,7 @@ async def run_migrations_online() -> None:
     """
     connectable = AsyncEngine(
         engine_from_config(
-            config.get_section(config.config_ini_section),
+            config.get_section(config.config_ini_section) or {},
             prefix="sqlalchemy.",
             poolclass=pool.NullPool,
             future=True,
