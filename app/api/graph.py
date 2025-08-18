@@ -59,28 +59,16 @@ router = APIRouter(prefix="/graph")
 
 @router.get("", response_model=GraphResponse)
 async def get_graph(
-    scope: GraphScope = Query(
-        GraphScope.ALL, description="Scope of the graph to return"
-    ),
+    scope: GraphScope = Query(GraphScope.ALL, description="Scope of the graph to return"),
     entity_type: Optional[str] = Query(
         None, description="Filter by entity type (when scope=by_type)"
     ),
-    relationship_type: Optional[str] = Query(
-        None, description="Filter by relationship type"
-    ),
-    root_id: Optional[UUID] = Query(
-        None, description="Root entity ID (when scope=neighborhood)"
-    ),
+    relationship_type: Optional[str] = Query(None, description="Filter by relationship type"),
+    root_id: Optional[UUID] = Query(None, description="Root entity ID (when scope=neighborhood)"),
     depth: int = Query(1, ge=1, le=3, description="Depth of neighborhood traversal"),
-    include_metadata: bool = Query(
-        True, description="Whether to include metadata in the response"
-    ),
-    limit_nodes: Optional[int] = Query(
-        None, description="Maximum number of nodes to return"
-    ),
-    limit_edges: Optional[int] = Query(
-        None, description="Maximum number of edges to return"
-    ),
+    include_metadata: bool = Query(True, description="Whether to include metadata in the response"),
+    limit_nodes: Optional[int] = Query(None, description="Maximum number of nodes to return"),
+    limit_edges: Optional[int] = Query(None, description="Maximum number of edges to return"),
     db: AsyncSession = Depends(get_db),
 ) -> GraphResponse:
     """
@@ -163,9 +151,7 @@ async def get_graph(
 
     elif scope == GraphScope.BY_TYPE:
         # Fetch entities of the specified type
-        entity_query = (
-            select(Entity).where(Entity.type == entity_type).limit(limit_nodes + 1)
-        )
+        entity_query = select(Entity).where(Entity.type == entity_type).limit(limit_nodes + 1)
         entity_result = await db.execute(entity_query)
         entities = entity_result.scalars().all()
 
@@ -232,9 +218,7 @@ async def get_graph(
                     Relationship.source_entity_id == entity_id
                 )
                 if relationship_type:
-                    out_rel_query = out_rel_query.where(
-                        Relationship.type == relationship_type
-                    )
+                    out_rel_query = out_rel_query.where(Relationship.type == relationship_type)
 
                 out_rel_result = await db.execute(out_rel_query)
                 out_relationships = out_rel_result.scalars().all()
@@ -244,9 +228,7 @@ async def get_graph(
                     Relationship.target_entity_id == entity_id
                 )
                 if relationship_type:
-                    in_rel_query = in_rel_query.where(
-                        Relationship.type == relationship_type
-                    )
+                    in_rel_query = in_rel_query.where(Relationship.type == relationship_type)
 
                 in_rel_result = await db.execute(in_rel_query)
                 in_relationships = in_rel_result.scalars().all()
@@ -262,9 +244,7 @@ async def get_graph(
 
                             # Add target entity to nodes if within limit
                             if len(nodes) < limit_nodes:
-                                target_entity = await db.get(
-                                    Entity, rel.target_entity_id
-                                )
+                                target_entity = await db.get(Entity, rel.target_entity_id)
                                 if target_entity:
                                     nodes[target_entity.id] = target_entity
                                     next_frontier.append(target_entity.id)
@@ -284,9 +264,7 @@ async def get_graph(
 
                             # Add source entity to nodes if within limit
                             if len(nodes) < limit_nodes:
-                                source_entity = await db.get(
-                                    Entity, rel.source_entity_id
-                                )
+                                source_entity = await db.get(Entity, rel.source_entity_id)
                                 if source_entity:
                                     nodes[source_entity.id] = source_entity
                                     next_frontier.append(source_entity.id)
@@ -326,8 +304,6 @@ async def get_graph(
     ]
 
     # Create graph statistics
-    stats = GraphStats(
-        node_count=len(node_list), edge_count=len(edge_list), truncated=truncated
-    )
+    stats = GraphStats(node_count=len(node_list), edge_count=len(edge_list), truncated=truncated)
 
     return GraphResponse(nodes=node_list, edges=edge_list, stats=stats)

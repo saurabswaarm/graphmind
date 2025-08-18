@@ -130,13 +130,9 @@ async def list_relationships(
     metadata_contains: Optional[str] = Query(
         None, description="Filter by metadata containing JSON (as string)"
     ),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of items to return"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of items to return"),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
-    sort: str = Query(
-        "created_at:desc", description="Sort field and direction (field:asc|desc)"
-    ),
+    sort: str = Query("created_at:desc", description="Sort field and direction (field:asc|desc)"),
     db: AsyncSession = Depends(get_db),
 ) -> PaginationResponse[RelationshipRead]:
     """
@@ -169,14 +165,10 @@ async def list_relationships(
         try:
             metadata_dict = json.loads(metadata_contains)
             query = query.where(
-                text("metadata @> :metadata").bindparams(
-                    metadata=json.dumps(metadata_dict)
-                )
+                text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
             )
             count_query = count_query.where(
-                text("metadata @> :metadata").bindparams(
-                    metadata=json.dumps(metadata_dict)
-                )
+                text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
             )
         except json.JSONDecodeError:
             raise HTTPException(
@@ -218,17 +210,13 @@ async def list_relationships(
         RelationshipRead.model_validate(relationship) for relationship in relationships
     ]
 
-    return PaginationResponse(
-        items=relationship_reads, total=total, limit=limit, offset=offset
-    )
+    return PaginationResponse(items=relationship_reads, total=total, limit=limit, offset=offset)
 
 
 @router.patch("/{relationship_id}", response_model=RelationshipRead)
 async def update_relationship(
     relationship_update: RelationshipUpdate,
-    relationship_id: UUID = Path(
-        ..., description="The ID of the relationship to update"
-    ),
+    relationship_id: UUID = Path(..., description="The ID of the relationship to update"),
     metadata_mode: str = Query(
         "replace", description="How to handle metadata updates: 'merge' or 'replace'"
     ),
@@ -246,12 +234,8 @@ async def update_relationship(
         )
 
     # Check if the update would cause a self-relationship
-    new_source_id = (
-        relationship_update.source_entity_id or relationship.source_entity_id
-    )
-    new_target_id = (
-        relationship_update.target_entity_id or relationship.target_entity_id
-    )
+    new_source_id = relationship_update.source_entity_id or relationship.source_entity_id
+    new_target_id = relationship_update.target_entity_id or relationship.target_entity_id
 
     if new_source_id == new_target_id and not settings.ALLOW_SELF_RELATIONSHIPS:
         raise HTTPException(
@@ -308,9 +292,7 @@ async def update_relationship(
 
 @router.delete("/{relationship_id}", status_code=status.HTTP_200_OK)
 async def delete_relationship(
-    relationship_id: UUID = Path(
-        ..., description="The ID of the relationship to delete"
-    ),
+    relationship_id: UUID = Path(..., description="The ID of the relationship to delete"),
     db: AsyncSession = Depends(get_db),
 ) -> Dict[str, bool]:
     """

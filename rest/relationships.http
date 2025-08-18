@@ -1,0 +1,127 @@
+### Graph API - Relationships Testing
+
+@baseUrl = {{$dotenv baseUrl}}
+@relationshipId = {{createRelationship.response.body.id}}
+@sourceEntityId = {{createSourceEntity.response.body.id}}
+@targetEntityId = {{createTargetEntity.response.body.id}}
+
+# Create source entity for relationship testing
+# @name createSourceEntity
+POST {{baseUrl}}/entities
+Content-Type: application/json
+
+{
+  "type": "person",
+  "name": "John Doe",
+  "metadata": {
+    "age": 30,
+    "email": "john.doe@example.com"
+  }
+}
+
+###
+
+# Create target entity for relationship testing
+# @name createTargetEntity
+POST {{baseUrl}}/entities
+Content-Type: application/json
+
+{
+  "type": "company",
+  "name": "Tech Corp",
+  "metadata": {
+    "industry": "Technology",
+    "founded": 2010
+  }
+}
+
+###
+
+# Create a new relationship
+# @name createRelationship
+POST {{baseUrl}}/relationships
+Content-Type: application/json
+
+{
+  "source_entity_id": "{{sourceEntityId}}",
+  "target_entity_id": "{{targetEntityId}}",
+  "type": "works_at",
+  "metadata": {
+    "start_date": "2020-01-15",
+    "position": "Software Engineer"
+  }
+}
+
+###
+
+# Get a relationship by ID
+GET {{baseUrl}}/relationships/{{relationshipId}}
+
+###
+
+# List relationships with filters
+GET {{baseUrl}}/relationships?limit=10&offset=0&type=works_at
+
+###
+
+# List relationships for a specific source entity
+GET {{baseUrl}}/relationships?source_id={{sourceEntityId}}
+
+###
+
+# Update a relationship
+PATCH {{baseUrl}}/relationships/{{relationshipId}}
+Content-Type: application/json
+
+{
+  "type": "employed_by",
+  "metadata": {
+    "start_date": "2020-01-15",
+    "position": "Senior Software Engineer",
+    "salary": 95000
+  }
+}
+
+###
+
+# Update a relationship with merge metadata
+PATCH {{baseUrl}}/relationships/{{relationshipId}}?metadata_mode=merge
+Content-Type: application/json
+
+{
+  "metadata": {
+    "end_date": "2023-12-31"
+  }
+}
+
+###
+
+# Delete a relationship
+DELETE {{baseUrl}}/relationships/{{relationshipId}}
+
+###
+
+# Create multiple relationships for testing
+# @name createRelationship1
+POST {{baseUrl}}/relationships
+Content-Type: application/json
+
+{
+  "source_entity_id": "{{sourceEntityId}}",
+  "target_entity_id": "{{targetEntityId}}",
+  "type": "owns",
+  "metadata": {
+    "shares": 100,
+    "percentage": 5.5
+  }
+}
+
+###
+
+# List all relationships
+GET {{baseUrl}}/relationships?limit=100
+
+###
+
+# List relationships sorted by type
+GET {{baseUrl}}/relationships?sort=type:asc&limit=50

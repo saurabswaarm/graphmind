@@ -1,0 +1,115 @@
+### Graph API - Entities Testing
+
+@baseUrl = {{$dotenv baseUrl}}
+@entityId = {{createEntity.response.body.id}}
+
+# Create a new entity
+# @name createEntity
+POST {{baseUrl}}/entities
+Content-Type: application/json
+
+{
+  "type": "person",
+  "name": "John Doe",
+  "metadata": {
+    "age": 30,
+    "email": "john.doe@example.com",
+    "department": "Engineering"
+  }
+}
+
+###
+
+# Get an entity by ID
+GET {{baseUrl}}/entities/{{entityId}}
+
+###
+
+# List entities with filters
+GET {{baseUrl}}/entities?limit=10&offset=0&type=person
+
+###
+
+# List entities with name filter
+GET {{baseUrl}}/entities?name_contains=John
+
+###
+
+# Update an entity
+PATCH {{baseUrl}}/entities/{{entityId}}
+Content-Type: application/json
+
+{
+  "name": "John Smith",
+  "metadata": {
+    "age": 31,
+    "email": "john.smith@example.com",
+    "department": "Engineering",
+    "position": "Senior Engineer"
+  }
+}
+
+###
+
+# Update an entity with merge metadata
+PATCH {{baseUrl}}/entities/{{entityId}}?metadata_mode=merge
+Content-Type: application/json
+
+{
+  "metadata": {
+    "salary": 95000
+  }
+}
+
+###
+
+# Delete an entity
+DELETE {{baseUrl}}/entities/{{entityId}}
+
+###
+
+# Create multiple entities for testing
+# @name createEntity1
+POST {{baseUrl}}/entities
+Content-Type: application/json
+
+{
+  "type": "company",
+  "name": "Tech Corp",
+  "metadata": {
+    "industry": "Technology",
+    "founded": 2010,
+    "employees": 500
+  }
+}
+
+###
+
+# @name createEntity2
+POST {{baseUrl}}/entities
+Content-Type: application/json
+
+{
+  "type": "person",
+  "name": "Jane Smith",
+  "metadata": {
+    "age": 28,
+    "email": "jane.smith@example.com",
+    "department": "Marketing"
+  }
+}
+
+###
+
+# List all entities
+GET {{baseUrl}}/entities?limit=100
+
+###
+
+# List entities sorted by name
+GET {{baseUrl}}/entities?sort=name:asc&limit=50
+
+###
+
+# Delete with force flag (if entity has relationships)
+DELETE {{baseUrl}}/entities/{{entityId}}?force=true

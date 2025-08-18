@@ -26,9 +26,7 @@ class TimestampMixin(BaseModel):
 class PaginationParams(BaseSchema):
     """Query parameters for pagination."""
 
-    limit: int = Field(
-        100, ge=1, le=1000, description="Maximum number of items to return"
-    )
+    limit: int = Field(100, ge=1, le=1000, description="Maximum number of items to return")
     offset: int = Field(0, ge=0, description="Number of items to skip")
 
 

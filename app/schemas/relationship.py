@@ -15,9 +15,7 @@ class RelationshipBase(BaseSchema):
         ...,
         description="Type of relationship (e.g., 'owns', 'works_at', 'connected_to')",
     )
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Flexible metadata as JSON"
-    )
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Flexible metadata as JSON")
 
     @field_validator("type")
     @classmethod
@@ -40,9 +38,7 @@ class RelationshipUpdate(BaseSchema):
     source_entity_id: Optional[UUID] = Field(None, description="UUID of source entity")
     target_entity_id: Optional[UUID] = Field(None, description="UUID of target entity")
     type: Optional[str] = Field(None, description="Type of relationship")
-    metadata: Optional[Dict[str, Any]] = Field(
-        None, description="Flexible metadata as JSON"
-    )
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Flexible metadata as JSON")
 
     @field_validator("type")
     @classmethod
@@ -64,12 +60,8 @@ class RelationshipRead(RelationshipBase, TimestampMixin):
 class RelationshipFilter(BaseSchema):
     """Schema for relationship filtering parameters."""
 
-    source_entity_id: Optional[UUID] = Field(
-        None, description="Filter by source entity ID"
-    )
-    target_entity_id: Optional[UUID] = Field(
-        None, description="Filter by target entity ID"
-    )
+    source_entity_id: Optional[UUID] = Field(None, description="Filter by source entity ID")
+    target_entity_id: Optional[UUID] = Field(None, description="Filter by target entity ID")
     type: Optional[str] = Field(None, description="Filter by relationship type")
     metadata_contains: Optional[Dict[str, Any]] = Field(
         None, description="Filter by metadata containing these key-value pairs"

@@ -9,10 +9,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ..schemas.base import ErrorResponse
 
 
-
-async def validation_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handler for request validation errors.
     Formats error details in a consistent way.
@@ -21,7 +18,7 @@ async def validation_exception_handler(
     if not isinstance(exc, RequestValidationError):
         # This should never happen in practice, but we need to satisfy the type checker
         raise TypeError(f"Expected RequestValidationError, got {type(exc)}")
-    
+
     # Convert ErrorDetails to Dict[str, Any] for compatibility
     errors: List[Dict[str, Any]] = [dict(error) for error in exc.errors()]
     return JSONResponse(
@@ -30,9 +27,7 @@ async def validation_exception_handler(
     )
 
 
-async def integrity_error_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def integrity_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handler for SQLAlchemy IntegrityError exceptions.
     Converts database constraint errors into user-friendly messages.
@@ -41,23 +36,18 @@ async def integrity_error_handler(
     if not isinstance(exc, IntegrityError):
         # This should never happen in practice, but we need to satisfy the type checker
         raise TypeError(f"Expected IntegrityError, got {type(exc)}")
-    
+
     error_message = str(exc)
     error_code = "integrity_error"
     status_code = status.HTTP_400_BAD_REQUEST
 
     # Handle specific integrity errors with better messages
-    if (
-        "unique constraint" in error_message.lower()
-        or "duplicate key" in error_message.lower()
-    ):
+    if "unique constraint" in error_message.lower() or "duplicate key" in error_message.lower():
         if (
             "relationships_source_target_type_key" in error_message
             or "uq_relationships_source_target_type" in error_message
         ):
-            error_message = (
-                "A relationship with the same source, target, and type already exists."
-            )
+            error_message = "A relationship with the same source, target, and type already exists."
             error_code = "duplicate_relationship"
             status_code = status.HTTP_409_CONFLICT
         else:
@@ -85,9 +75,7 @@ async def integrity_error_handler(
     )
 
 
-async def sqlalchemy_error_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def sqlalchemy_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handler for general SQLAlchemy errors.
     """
@@ -95,7 +83,7 @@ async def sqlalchemy_error_handler(
     if not isinstance(exc, SQLAlchemyError):
         # This should never happen in practice, but we need to satisfy the type checker
         raise TypeError(f"Expected SQLAlchemyError, got {type(exc)}")
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=ErrorResponse(
@@ -104,9 +92,7 @@ async def sqlalchemy_error_handler(
     )
 
 
-async def validation_error_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def validation_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """
     Handler for Pydantic validation errors.
     """
@@ -114,7 +100,7 @@ async def validation_error_handler(
     if not isinstance(exc, ValidationError):
         # This should never happen in practice, but we need to satisfy the type checker
         raise TypeError(f"Expected ValidationError, got {type(exc)}")
-    
+
     # Convert ErrorDetails to Dict[str, Any] for compatibility
     errors: List[Dict[str, Any]] = [dict(error) for error in exc.errors()]
     return JSONResponse(
@@ -136,6 +122,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
 
 
 from fastapi import FastAPI
+
 
 def register_exception_handlers(app: FastAPI) -> None:
     """

@@ -44,7 +44,9 @@ class Settings(BaseSettings):
         if self.APP_ENV == "test":
             # Make sure we have sensible test defaults
             if not hasattr(self, "CORS_ORIGINS") or not self.CORS_ORIGINS:
-                object.__setattr__(self, "CORS_ORIGINS", ["http://localhost:3000", "http://localhost:8000"])
+                object.__setattr__(
+                    self, "CORS_ORIGINS", ["http://localhost:3000", "http://localhost:8000"]
+                )
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

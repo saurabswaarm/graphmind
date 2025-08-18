@@ -15,9 +15,7 @@ router = APIRouter(prefix="/entities")
 
 
 @router.post("", response_model=EntityRead, status_code=status.HTTP_201_CREATED)
-async def create_entity(
-    entity: EntityCreate, db: AsyncSession = Depends(get_db)
-) -> EntityRead:
+async def create_entity(entity: EntityCreate, db: AsyncSession = Depends(get_db)) -> EntityRead:
     """
     Create a new entity.
     """
@@ -75,13 +73,9 @@ async def list_entities(
     metadata_contains: Optional[str] = Query(
         None, description="Filter by metadata containing JSON (as string)"
     ),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of items to return"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of items to return"),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
-    sort: str = Query(
-        "created_at:desc", description="Sort field and direction (field:asc|desc)"
-    ),
+    sort: str = Query("created_at:desc", description="Sort field and direction (field:asc|desc)"),
     db: AsyncSession = Depends(get_db),
 ) -> PaginationResponse[EntityRead]:
     """
@@ -114,14 +108,10 @@ async def list_entities(
         try:
             metadata_dict = json.loads(metadata_contains)
             query = query.where(
-                text("entity_metadata @> :metadata").bindparams(
-                    metadata=json.dumps(metadata_dict)
-                )
+                text("entity_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
             )
             count_query = count_query.where(
-                text("entity_metadata @> :metadata").bindparams(
-                    metadata=json.dumps(metadata_dict)
-                )
+                text("entity_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
             )
         except json.JSONDecodeError:
             raise HTTPException(
@@ -175,9 +165,7 @@ async def list_entities(
         for entity in entities
     ]
 
-    return PaginationResponse(
-        items=entity_reads, total=total, limit=limit, offset=offset
-    )
+    return PaginationResponse(items=entity_reads, total=total, limit=limit, offset=offset)
 
 
 @router.patch("/{entity_id}", response_model=EntityRead)

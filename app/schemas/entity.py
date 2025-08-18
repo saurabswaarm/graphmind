@@ -9,13 +9,9 @@ from .base import BaseSchema, TimestampMixin
 class EntityBase(BaseSchema):
     """Base schema with common attributes for Entity models."""
 
-    type: str = Field(
-        ..., description="Type of entity (e.g., 'person', 'company', 'asset')"
-    )
+    type: str = Field(..., description="Type of entity (e.g., 'person', 'company', 'asset')")
     name: str = Field(..., description="Human-friendly label for the entity")
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Flexible metadata as JSON"
-    )
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Flexible metadata as JSON")
 
     @field_validator("type", "name")
     @classmethod
@@ -37,9 +33,7 @@ class EntityUpdate(BaseSchema):
 
     type: Optional[str] = Field(None, description="Type of entity")
     name: Optional[str] = Field(None, description="Human-friendly label for the entity")
-    metadata: Optional[Dict[str, Any]] = Field(
-        None, description="Flexible metadata as JSON"
-    )
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Flexible metadata as JSON")
 
     @field_validator("type", "name")
     @classmethod
