@@ -4,9 +4,15 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 
 from ..config import settings
 
+# Convert postgresql:// to postgresql+asyncpg:// for async support
+# This ensures we're using the asyncpg driver instead of psycopg2
+database_url_str = str(settings.DATABASE_URL)
+if database_url_str.startswith("postgresql://"):
+    database_url_str = database_url_str.replace("postgresql://", "postgresql+asyncpg://")
+
 # Create engine with connection pool
 engine = create_async_engine(
-    str(settings.DATABASE_URL),
+    database_url_str,
     pool_size=settings.DB_POOL_SIZE,
     pool_pre_ping=True,
     echo=settings.APP_ENV == "local",
