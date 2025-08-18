@@ -21,7 +21,9 @@ from app.config import settings
 config = context.config
 
 # Override the sqlalchemy.url with our async database URL from settings
-config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
+# Convert postgresql:// to postgresql+asyncpg:// for async support
+async_database_url = str(settings.DATABASE_URL).replace("postgresql://", "postgresql+asyncpg://")
+config.set_main_option("sqlalchemy.url", async_database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
