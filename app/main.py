@@ -53,6 +53,11 @@ def create_app() -> FastAPI:
     api_router.include_router(relationships.router, tags=["relationships"])
     api_router.include_router(graph.router, tags=["graph"])
 
+    # Add root endpoint
+    @app.get("/")
+    async def root():
+        return {"message": "Welcome to the Graph Database API"}
+
     # Include the API router in the main app
     app.include_router(api_router)
 

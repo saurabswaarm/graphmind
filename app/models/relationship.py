@@ -32,7 +32,7 @@ class Relationship(Base):
         ForeignKey("entities.id", ondelete="CASCADE"), index=True
     )
     type: Mapped[str] = mapped_column(String, index=True)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(
+    extradata: Mapped[Dict[str, Any]] = mapped_column(
         "relationship_metadata", JSONB, default={}, server_default=text("'{}'::jsonb")
     )
 
@@ -58,7 +58,7 @@ class Relationship(Base):
             name="uq_relationships_source_target_type",
         ),
         # GIN index for JSONB metadata
-        Index("ix_relationships_metadata_gin", metadata, postgresql_using="gin"),
+        Index("ix_relationships_metadata_gin", extradata, postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:

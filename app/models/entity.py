@@ -26,7 +26,7 @@ class Entity(Base):
     # Fields
     type: Mapped[str] = mapped_column(String, index=True)
     name: Mapped[str] = mapped_column(String, index=True)
-    metadata: Mapped[Dict[str, Any]] = mapped_column(
+    extradata: Mapped[Dict[str, Any]] = mapped_column(
         "entity_metadata", JSONB, default={}, server_default=text("'{}'::jsonb")
     )
 
@@ -48,7 +48,7 @@ class Entity(Base):
     # Indexes
     __table_args__ = (
         # GIN index for JSONB metadata
-        Index("ix_entities_metadata_gin", metadata, postgresql_using="gin"),
+        Index("ix_entities_metadata_gin", extradata, postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:

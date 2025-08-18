@@ -19,7 +19,7 @@ async def create_entity(entity: EntityCreate, db: AsyncSession = Depends(get_db)
     """
     Create a new entity.
     """
-    db_entity = Entity(type=entity.type, name=entity.name, metadata=entity.metadata)
+    db_entity = Entity(type=entity.type, name=entity.name, extradata=entity.extradata)
 
     db.add(db_entity)
     await db.commit()
@@ -30,7 +30,7 @@ async def create_entity(entity: EntityCreate, db: AsyncSession = Depends(get_db)
         id=db_entity.id,
         type=db_entity.type,
         name=db_entity.name,
-        metadata=db_entity.metadata,
+        extradata=db_entity.extradata,
         created_at=db_entity.created_at,
         updated_at=db_entity.updated_at,
     )
@@ -57,7 +57,7 @@ async def read_entity(
         id=entity.id,
         type=entity.type,
         name=entity.name,
-        metadata=entity.metadata,
+        extradata=entity.extradata,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
     )
@@ -70,8 +70,8 @@ async def list_entities(
     name_contains: Optional[str] = Query(
         None, description="Filter by name containing string (case-insensitive)"
     ),
-    metadata_contains: Optional[str] = Query(
-        None, description="Filter by metadata containing JSON (as string)"
+    extradata_contains: Optional[str] = Query(
+        None, description="Filter by extradata containing JSON (as string)"
     ),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of items to return"),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
@@ -101,22 +101,22 @@ async def list_entities(
         query = query.where(Entity.name.ilike(f"%{name_contains}%"))
         count_query = count_query.where(Entity.name.ilike(f"%{name_contains}%"))
 
-    if metadata_contains:
-        # Parse metadata_contains as JSON
+    if extradata_contains:
+        # Parse extradata_contains as JSON
         import json
 
         try:
-            metadata_dict = json.loads(metadata_contains)
+            extradata_dict = json.loads(extradata_contains)
             query = query.where(
-                text("entity_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
+                text("entity_extradata @> :extradata").bindparams(extradata=json.dumps(extradata_dict))
             )
             count_query = count_query.where(
-                text("entity_metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
+                text("entity_extradata @> :extradata").bindparams(extradata=json.dumps(extradata_dict))
             )
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid JSON in metadata_contains parameter",
+                detail="Invalid JSON in extradata_contains parameter",
             )
 
     # Apply sorting
@@ -158,7 +158,7 @@ async def list_entities(
             id=entity.id,
             type=entity.type,
             name=entity.name,
-            metadata=entity.metadata,
+            extradata=entity.extradata,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
         )
@@ -172,8 +172,8 @@ async def list_entities(
 async def update_entity(
     entity_update: EntityUpdate,
     entity_id: UUID = Path(..., description="The ID of the entity to update"),
-    metadata_mode: str = Query(
-        "replace", description="How to handle metadata updates: 'merge' or 'replace'"
+    extradata_mode: str = Query(
+        "replace", description="How to handle extradata updates: 'merge' or 'replace'"
     ),
     db: AsyncSession = Depends(get_db),
 ) -> EntityRead:
@@ -195,13 +195,13 @@ async def update_entity(
     if entity_update.name is not None:
         entity.name = entity_update.name
 
-    if entity_update.metadata is not None:
-        if metadata_mode == "merge":
-            # Merge existing metadata with new metadata
-            entity.metadata = {**entity.metadata, **entity_update.metadata}
+    if entity_update.extradata is not None:
+        if extradata_mode == "merge":
+            # Merge existing extradata with new extradata
+            entity.extradata = {**entity.extradata, **entity_update.extradata}
         else:
-            # Replace metadata completely
-            entity.metadata = entity_update.metadata
+            # Replace extradata completely
+            entity.extradata = entity_update.extradata
 
     await db.commit()
     await db.refresh(entity)
@@ -211,7 +211,7 @@ async def update_entity(
         id=entity.id,
         type=entity.type,
         name=entity.name,
-        metadata=entity.metadata,
+        extradata=entity.extradata,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
     )

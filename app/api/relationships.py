@@ -71,8 +71,8 @@ async def create_relationship(
     if existing_relationship:
         if upsert:
             # Update the existing relationship
-            if relationship.metadata:
-                existing_relationship.metadata = relationship.metadata
+            if relationship.extradata:
+                existing_relationship.extradata = relationship.extradata
             await db.commit()
             await db.refresh(existing_relationship)
             return existing_relationship
@@ -87,7 +87,7 @@ async def create_relationship(
         source_entity_id=relationship.source_entity_id,
         target_entity_id=relationship.target_entity_id,
         type=relationship.type,
-        metadata=relationship.metadata,
+        extradata=relationship.extradata,
     )
 
     try:
@@ -127,8 +127,8 @@ async def list_relationships(
     source_id: Optional[UUID] = Query(None, description="Filter by source entity ID"),
     target_id: Optional[UUID] = Query(None, description="Filter by target entity ID"),
     type: Optional[str] = Query(None, description="Filter by relationship type"),
-    metadata_contains: Optional[str] = Query(
-        None, description="Filter by metadata containing JSON (as string)"
+    extradata_contains: Optional[str] = Query(
+        None, description="Filter by extradata containing JSON (as string)"
     ),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of items to return"),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
@@ -158,22 +158,22 @@ async def list_relationships(
         query = query.where(Relationship.type == type)
         count_query = count_query.where(Relationship.type == type)
 
-    if metadata_contains:
-        # Parse metadata_contains as JSON
+    if extradata_contains:
+        # Parse extradata_contains as JSON
         import json
 
         try:
-            metadata_dict = json.loads(metadata_contains)
+            extradata_dict = json.loads(extradata_contains)
             query = query.where(
-                text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
+                text("relationship_extradata @> :extradata").bindparams(extradata=json.dumps(extradata_dict))
             )
             count_query = count_query.where(
-                text("metadata @> :metadata").bindparams(metadata=json.dumps(metadata_dict))
+                text("relationship_extradata @> :extradata").bindparams(extradata=json.dumps(extradata_dict))
             )
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid JSON in metadata_contains parameter",
+                detail="Invalid JSON in extradata_contains parameter",
             )
 
     # Apply sorting
@@ -217,8 +217,8 @@ async def list_relationships(
 async def update_relationship(
     relationship_update: RelationshipUpdate,
     relationship_id: UUID = Path(..., description="The ID of the relationship to update"),
-    metadata_mode: str = Query(
-        "replace", description="How to handle metadata updates: 'merge' or 'replace'"
+    extradata_mode: str = Query(
+        "replace", description="How to handle extradata updates: 'merge' or 'replace'"
     ),
     db: AsyncSession = Depends(get_db),
 ) -> Relationship:
@@ -267,16 +267,16 @@ async def update_relationship(
     if relationship_update.type is not None:
         relationship.type = relationship_update.type
 
-    if relationship_update.metadata is not None:
-        if metadata_mode == "merge":
-            # Merge existing metadata with new metadata
-            relationship.metadata = {
-                **relationship.metadata,
-                **relationship_update.metadata,
+    if relationship_update.extradata is not None:
+        if extradata_mode == "merge":
+            # Merge existing extradata with new extradata
+            relationship.extradata = {
+                **relationship.extradata,
+                **relationship_update.extradata,
             }
         else:
-            # Replace metadata completely
-            relationship.metadata = relationship_update.metadata
+            # Replace extradata completely
+            relationship.extradata = relationship_update.extradata
 
     try:
         await db.commit()

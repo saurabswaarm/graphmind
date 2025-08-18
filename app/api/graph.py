@@ -25,7 +25,7 @@ class Node(BaseModel):
     id: UUID
     type: str
     name: str
-    metadata: Optional[Dict[str, Any]] = None
+    extradata: Optional[Dict[str, Any]] = None
 
 
 class Edge(BaseModel):
@@ -35,7 +35,7 @@ class Edge(BaseModel):
     source: UUID
     target: UUID
     type: str
-    metadata: Optional[Dict[str, Any]] = None
+    extradata: Optional[Dict[str, Any]] = None
 
 
 class GraphStats(BaseModel):
@@ -66,7 +66,7 @@ async def get_graph(
     relationship_type: Optional[str] = Query(None, description="Filter by relationship type"),
     root_id: Optional[UUID] = Query(None, description="Root entity ID (when scope=neighborhood)"),
     depth: int = Query(1, ge=1, le=3, description="Depth of neighborhood traversal"),
-    include_metadata: bool = Query(True, description="Whether to include metadata in the response"),
+    include_extradata: bool = Query(True, description="Whether to include extradata in the response"),
     limit_nodes: Optional[int] = Query(None, description="Maximum number of nodes to return"),
     limit_edges: Optional[int] = Query(None, description="Maximum number of edges to return"),
     db: AsyncSession = Depends(get_db),
@@ -287,7 +287,7 @@ async def get_graph(
             id=entity.id,
             type=entity.type,
             name=entity.name,
-            metadata=entity.metadata if include_metadata else None,
+            extradata=entity.extradata if include_extradata else None,
         )
         for entity in nodes.values()
     ]
@@ -298,7 +298,7 @@ async def get_graph(
             source=rel.source_entity_id,
             target=rel.target_entity_id,
             type=rel.type,
-            metadata=rel.metadata if include_metadata else None,
+            extradata=rel.extradata if include_extradata else None,
         )
         for rel in edges.values()
     ]
