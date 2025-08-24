@@ -1,0 +1,72 @@
+### Graph API - Graph Endpoint Testing
+
+@baseUrl = http://127.0.0.1:8000
+@rootEntityId = 0728d481-9f62-4509-aed8-acc96b21b51f
+
+# Get full graph (all entities and relationships)
+GET {{baseUrl}}/graph
+
+###
+
+# Get full graph with limits
+GET {{baseUrl}}/graph?limit_nodes=100&limit_edges=200
+
+###
+
+# Get graph without extradata
+GET {{baseUrl}}/graph?include_extradata=false
+
+###
+
+# Get graph filtered by relationship type
+GET {{baseUrl}}/graph?relationship_type=works_at
+
+###
+
+# Get graph by entity type
+GET {{baseUrl}}/graph?scope=by_type&entity_type=person
+
+###
+
+# Get graph by entity type with relationship filter
+GET {{baseUrl}}/graph?scope=by_type&entity_type=person&relationship_type=works_at
+
+###
+
+# Get neighborhood graph around a specific entity
+GET {{baseUrl}}/graph?scope=neighborhood&root_id={{rootEntityId}}
+
+###
+
+# Get neighborhood graph with depth
+GET {{baseUrl}}/graph?scope=neighborhood&root_id={{rootEntityId}}&depth=2
+
+###
+
+# Get neighborhood graph with relationship filter
+GET {{baseUrl}}/graph?scope=neighborhood&root_id={{rootEntityId}}&relationship_type=works_at
+
+###
+
+# Get neighborhood graph with limits
+GET {{baseUrl}}/graph?scope=neighborhood&root_id={{rootEntityId}}&limit_nodes=50&limit_edges=100
+
+###
+
+# Error case: by_type scope without entity_type
+GET {{baseUrl}}/graph?scope=by_type
+
+###
+
+# Error case: neighborhood scope without root_id
+GET {{baseUrl}}/graph?scope=neighborhood
+
+###
+
+# Error case: invalid scope
+GET {{baseUrl}}/graph?scope=invalid_scope
+
+###
+
+# Error case: invalid UUID for root_id
+GET {{baseUrl}}/graph?scope=neighborhood&root_id=invalid-uuid
