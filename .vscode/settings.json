@@ -1,5 +1,11 @@
 {
     "python.languageServer": "Default",
-    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.defaultInterpreterPath": "./backend/.venv/bin/python",
     "python.terminal.activateEnvironment": true,
+    "typescript.preferences.useAliasesForRenames": false,
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "eslint.workingDirectories": ["frontend"],
+    "files.associations": {
+        "*.http": "http"
+    }
 }

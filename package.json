@@ -1,0 +1,28 @@
+{
+  "name": "graphapp-monorepo",
+  "version": "1.0.0",
+  "description": "GraphApp monorepo with FastAPI backend and React frontend",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uv run uvicorn app.main:app --reload",
+    "build:frontend": "cd frontend && npm run build",
+    "install:frontend": "cd frontend && npm install",
+    "setup:backend": "cd backend && uv venv && uv pip install -e .",
+    "migrate:backend": "cd backend && uv run alembic upgrade head",
+    "test:frontend": "cd frontend && npm run lint",
+    "clean": "rm -rf frontend/node_modules frontend/dist backend/.venv backend/app/__pycache__"
+  },
+  "keywords": [
+    "monorepo",
+    "fastapi",
+    "react",
+    "typescript",
+    "graph",
+    "postgresql"
+  ],
+  "license": "MIT"
+}

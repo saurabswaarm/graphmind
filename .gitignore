@@ -62,3 +62,21 @@ logs/
 # Local databases
 *.sqlite3
 *.db
+
+# Node.js dependencies
+frontend/node_modules/
+node_modules/
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+
+# Frontend environment files
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# Frontend logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
