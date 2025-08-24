@@ -73,7 +73,7 @@
 /* Text box node styles */
 .text-box-node {
   background: white;
-  border: 2px solid #3498db;
+  border: 2px solid red;
   border-radius: 4px;
   padding: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -81,7 +81,7 @@
 }
 
 .text-box-node textarea {
-  width: 100%;
+  width: 80%;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 8px;
@@ -122,4 +122,9 @@
 .graph-container {
   width: 100%;
   height: 100%;
+}
+
+.react-flow {
+  width: 100% !important;
+  height: 100% !important;
 }

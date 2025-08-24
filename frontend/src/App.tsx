@@ -2,7 +2,7 @@ import { Provider } from "react-redux";
 import store from "./store";
 import GraphEditor from "./src/components/GraphEditor";
 import "./App.css";
-import "./flow-styles.css";
+import "./src/styles/flow-styles.css";
 
 function App() {
   return (
