@@ -3,6 +3,7 @@ import store from "./store";
 import GraphEditor from "./src/components/GraphEditor";
 import "./App.css";
 import "./src/styles/flow-styles.css";
+import { ReactFlowProvider } from "@xyflow/react";
 
 function App() {
   return (
@@ -15,7 +16,9 @@ function App() {
             Use controls to navigate
           </p>
         </header>
-        <GraphEditor />
+        <ReactFlowProvider>
+          <GraphEditor />
+        </ReactFlowProvider>
       </div>
     </Provider>
   );

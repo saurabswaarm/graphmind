@@ -15,6 +15,7 @@ import {
   Panel,
   Handle,
   Position,
+  useReactFlow,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -56,7 +57,7 @@ function TextBoxNode({
         rows={3}
         cols={17}
         style={{
-          maxWidth: "100%",
+          maxWidth : "100%",
         }}
       />
       <div className="text-box-actions">
@@ -70,25 +71,125 @@ function TextBoxNode({
   );
 }
 
+// Custom Node component with delete button and key-value pair functionality
+interface CustomNodeData {
+  label: string;
+  keyValuePairs?: { key: string; value: string }[];
+}
+
+interface CustomNodeProps {
+  id: string;
+  data: CustomNodeData;
+}
+
+function CustomNode({ id, data }: CustomNodeProps) {
+  const { setNodes } = useReactFlow();
+  const [showForm, setShowForm] = useState(false);
+  const [keyValuePairs, setKeyValuePairs] = useState<{ key: string; value: string }[]>(data.keyValuePairs || []);
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+
+  const handleDelete = () => {
+    setNodes((nds) => nds.filter((node) => node.id !== id));
+  };
+
+  const handleAddKeyValuePair = () => {
+    if (newKey.trim() && newValue.trim()) {
+      const updatedPairs = [...keyValuePairs, { key: newKey.trim(), value: newValue.trim() }];
+      setKeyValuePairs(updatedPairs);
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === id
+            ? { ...node, data: { ...node.data, keyValuePairs: updatedPairs } }
+            : node
+        )
+      );
+      setNewKey("");
+      setNewValue("");
+    }
+  };
+
+  const handleRemoveKeyValuePair = (index: number) => {
+    const updatedPairs = keyValuePairs.filter((_, i) => i !== index);
+    setKeyValuePairs(updatedPairs);
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id
+          ? { ...node, data: { ...node.data, keyValuePairs: updatedPairs } }
+          : node
+      )
+    );
+  };
+
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} />
+      <div className="node-header">
+        <div className="node-label">{data.label}</div>
+        <button className="delete-button" onClick={handleDelete}>
+          ×
+        </button>
+      </div>
+      {keyValuePairs.length > 0 && (
+        <div className="key-value-container">
+          {keyValuePairs.map((pair, index) => (
+            <div key={index} className="key-value-pair">
+              <span className="key">{pair.key}:</span>
+              <span className="value">{pair.value}</span>
+              <button 
+                className="remove-pair-button" 
+                onClick={() => handleRemoveKeyValuePair(index)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button className="add-pair-button" onClick={() => setShowForm(!showForm)}>
+        {showForm ? "Cancel" : "Add Property"}
+      </button>
+      {showForm && (
+        <div className="key-value-form">
+          <input
+            type="text"
+            placeholder="Key"
+            value={newKey}
+            onChange={(e) => setNewKey(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Value"
+            value={newValue}
+            onChange={(e) => setNewValue(e.target.value)}
+          />
+          <button onClick={handleAddKeyValuePair}>Add</button>
+        </div>
+      )}
+      <Handle type="source" position={Position.Bottom} />
+    </div>
+  );
+}
+
 // Initial nodes
 const initialNodes: Node[] = [
   {
     id: "1",
     position: { x: 250, y: 25 },
     data: { label: "Entity A" },
-    type: "default",
+    type: "custom",
   },
   {
     id: "2",
     position: { x: 100, y: 125 },
     data: { label: "Entity B" },
-    type: "default",
+    type: "custom",
   },
   {
     id: "3",
     position: { x: 400, y: 125 },
     data: { label: "Entity C" },
-    type: "default",
+    type: "custom",
   },
 ];
 
@@ -104,6 +205,7 @@ function GraphEditor() {
   const [showTextBox, setShowTextBox] = useState(false);
   const [textBoxPosition, setTextBoxPosition] = useState({ x: 0, y: 0 });
   const [panningEnabled, setPanningEnabled] = useState(false);
+  const reactFlow = useReactFlow();
 
   // Handle keyboard events for panning
   useEffect(() => {
@@ -133,20 +235,23 @@ function GraphEditor() {
     [setEdges]
   );
 
-  const addNode = useCallback(
+  const addNode =
+  //  useCallback(
     (text: string) => {
+      debugger
+      console.log(textBoxPosition)
       const newNode: Node = {
         id: `node-${Date.now()}`,
         position: textBoxPosition,
         data: { label: text },
-        type: "default",
+        type: "custom",
       };
 
       setNodes((nds: Node[]) => [...nds, newNode]);
       setShowTextBox(false);
-    },
-    [setNodes, textBoxPosition]
-  );
+    };
+  //   [setNodes, textBoxPosition]
+  // );
 
   // Node types
   const nodeTypes = useMemo(
@@ -158,6 +263,7 @@ function GraphEditor() {
           onCancel={() => setShowTextBox(false)}
         />
       ),
+      custom: CustomNode,
     }),
     []
   );
@@ -183,11 +289,11 @@ function GraphEditor() {
           // Handle both single and double clicks
           if (e.target !== e.currentTarget) return;
 
-          const rect = e.currentTarget.getBoundingClientRect();
-          const position = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-          };
+          // Convert screen coordinates to flow coordinates
+          const position = reactFlow.screenToFlowPosition({
+            x: e.clientX,
+            y: e.clientY,
+          });
 
           // Set click position for potential node creation
           setTextBoxPosition(position);
