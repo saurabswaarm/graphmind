@@ -8,6 +8,7 @@ import {
   MiniMap,
   Background,
   BackgroundVariant,
+  ConnectionMode,
   type Node,
   type Edge,
   type Connection,
@@ -15,6 +16,7 @@ import {
 
 import '@xyflow/react/dist/style.css';
 import './App.css';
+import './flow-styles.css';
 
 // Initial nodes
 const initialNodes: Node[] = [
@@ -66,7 +68,7 @@ function App() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          connectionMode="loose"
+          connectionMode={ConnectionMode.Loose}
           fitView
         >
           <Controls />
