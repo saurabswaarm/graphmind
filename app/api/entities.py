@@ -16,24 +16,40 @@ router = APIRouter(prefix="/entities")
 
 @router.post("", response_model=EntityRead, status_code=status.HTTP_201_CREATED)
 async def create_entity(entity: EntityCreate, db: AsyncSession = Depends(get_db)) -> EntityRead:
+
+    existingEntitties = await db.execute(select(Entity).where(Entity.name == entity.name)) 
+
+    if len(existingEntitties.scalars().all()):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Entity with the name {entity.name} already exists"
+        )
+    
     """
     Create a new entity.
     """
-    db_entity = Entity(type=entity.type, name=entity.name, extradata=entity.extradata)
+    try:
+        db_entity = Entity(type=entity.type, name=entity.name, extradata=entity.extradata)
 
-    db.add(db_entity)
-    await db.commit()
-    await db.refresh(db_entity)
+        db.add(db_entity)
+        await db.commit()
+        await db.refresh(db_entity)
 
-    # Return EntityRead schema instead of Entity model
-    return EntityRead(
-        id=db_entity.id,
-        type=db_entity.type,
-        name=db_entity.name,
-        extradata=db_entity.extradata,
-        created_at=db_entity.created_at,
-        updated_at=db_entity.updated_at,
-    )
+        # Return EntityRead schema instead of Entity model
+        return EntityRead(
+            id=db_entity.id,
+            type=db_entity.type,
+            name=db_entity.name,
+            extradata=db_entity.extradata,
+            created_at=db_entity.created_at,
+            updated_at=db_entity.updated_at,
+        )
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create entity: {str(e)}"
+        )
 
 
 @router.get("/{entity_id}", response_model=EntityRead)

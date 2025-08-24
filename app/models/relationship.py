@@ -33,7 +33,7 @@ class Relationship(Base):
     )
     type: Mapped[str] = mapped_column(String, index=True)
     extradata: Mapped[Dict[str, Any]] = mapped_column(
-        "relationship_metadata", JSONB, default={}, server_default=text("'{}'::jsonb")
+        "relationship_extradata", JSONB, default={}, server_default=text("'{}'::jsonb")
     )
 
     # Relationships
@@ -57,8 +57,8 @@ class Relationship(Base):
             "type",
             name="uq_relationships_source_target_type",
         ),
-        # GIN index for JSONB metadata
-        Index("ix_relationships_metadata_gin", extradata, postgresql_using="gin"),
+        # GIN index for JSONB extradata
+        Index("ix_relationships_extradata_gin", extradata, postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:

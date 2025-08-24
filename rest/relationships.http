@@ -1,6 +1,6 @@
 ### Graph API - Relationships Testing
 
-@baseUrl = {{$dotenv baseUrl}}
+@baseUrl = http://127.0.0.1:8000 
 @relationshipId = {{createRelationship.response.body.id}}
 @sourceEntityId = {{createSourceEntity.response.body.id}}
 @targetEntityId = {{createTargetEntity.response.body.id}}
@@ -43,8 +43,8 @@ POST {{baseUrl}}/relationships
 Content-Type: application/json
 
 {
-  "source_entity_id": "{{sourceEntityId}}",
-  "target_entity_id": "{{targetEntityId}}",
+  "source_entity_id": "0728d481-9f62-4509-aed8-acc96b21b51f",
+  "target_entity_id": "31474cd3-d4a4-43d2-b395-98448edd120a",
   "type": "works_at",
   "metadata": {
     "start_date": "2020-01-15",

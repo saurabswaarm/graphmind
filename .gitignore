@@ -51,7 +51,7 @@ htmlcov/
 .ipynb_checkpoints/
 
 # Editors/IDE
-.vscode/
+# .vscode/  # Commented out to allow debug configuration
 .idea/
 *.code-workspace
 

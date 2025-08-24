@@ -1,6 +1,6 @@
 ### Graph API - Entities Testing
 
-@baseUrl = {{$dotenv baseUrl}}
+@baseUrl = http://127.0.0.1:8000 
 @entityId = {{createEntity.response.body.id}}
 
 # Create a new entity
@@ -9,11 +9,10 @@ POST {{baseUrl}}/entities
 Content-Type: application/json
 
 {
-  "type": "person",
-  "name": "John Doe",
-  "metadata": {
-    "age": 30,
-    "email": "john.doe@example.com",
+  "type": "company",
+  "name": "Another Ventures",
+  "extradata": {
+    "email": "email@example.com",
     "department": "Engineering"
   }
 }
@@ -41,7 +40,7 @@ Content-Type: application/json
 
 {
   "name": "John Smith",
-  "metadata": {
+  "extradata": {
     "age": 31,
     "email": "john.smith@example.com",
     "department": "Engineering",
@@ -56,7 +55,7 @@ PATCH {{baseUrl}}/entities/{{entityId}}?metadata_mode=merge
 Content-Type: application/json
 
 {
-  "metadata": {
+  "extradata": {
     "salary": 95000
   }
 }
@@ -76,7 +75,7 @@ Content-Type: application/json
 {
   "type": "company",
   "name": "Tech Corp",
-  "metadata": {
+  "extradata": {
     "industry": "Technology",
     "founded": 2010,
     "employees": 500
@@ -92,7 +91,7 @@ Content-Type: application/json
 {
   "type": "person",
   "name": "Jane Smith",
-  "metadata": {
+  "extradata": {
     "age": 28,
     "email": "jane.smith@example.com",
     "department": "Marketing"
@@ -112,4 +111,4 @@ GET {{baseUrl}}/entities?sort=name:asc&limit=50
 ###
 
 # Delete with force flag (if entity has relationships)
-DELETE {{baseUrl}}/entities/{{entityId}}?force=true
+DELETE {{baseUrl}}/entities/effd6154-2246-429a-a071-1c6d7f30eacc?force=true
